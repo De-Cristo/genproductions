@@ -118,6 +118,22 @@ pwhg_main:#g' Makefile
 echo "pwhg_main.o: svn.version" >> Makefile
 echo "lhefwrite.o: svn.version" >> Makefile
 
+# Fix gcc8 error
+sed -i -e "s#F77=gfortran#F77=gfortran -std=legacy#g" Makefile
+sed -i -e "s#F77= gfortran#F77= gfortran -std=legacy#g" Makefile
+sed -i -e "s#FFLAGS= #FFLAGS= -std=legacy #g" virtual/Source/make_opts
+sed -i -e "s#FFLAGS=#FFLAGS=-std=legacy #g" virtual/Source/IREGI/src/makefile_ML5_lib
+sed -i -e "s#FFLAGS = #FFLAGS = -std=legacy #g" virtual/Source/IREGI/src/qcdloop/makefile
+sed -i -e "s#FFLAGS        = #FFLAGS        = -std=legacy #g" virtual/Source/IREGI/src/qcdloop/ff/makefile
+sed -i -e "s#FFLAGS  = #FFLAGS  = -std=legacy #g" virtual/Source/IREGI/src/qcdloop/ql/makefile
+sed -i -e "s#FFLAGS        = #FFLAGS        = -std=legacy #g" madgraph/dhelas3.2/Makefile
+sed -i -e "s#FFLAGS = #FFLAGS = -std=legacy #g" QCDLoop-1.9/makefile
+sed -i -e "s#FFLAGS        = #FFLAGS        = -std=legacy #g" QCDLoop-1.9/ff/makefile
+sed -i -e "s#FFLAGS  = #FFLAGS  = -std=legacy #g" QCDLoop-1.9/ql/makefile
+sed -i -e "s#FFLAGS = #FFLAGS = -std=legacy #g" QCDLoop-1.9-gfortran/makefile
+sed -i -e "s#FFLAGS        = #FFLAGS        = -std=legacy #g" QCDLoop-1.9-gfortran/ff/makefile
+sed -i -e "s#FFLAGS  = #FFLAGS  = -std=legacy #g" QCDLoop-1.9-gfortran/ql/makefile
+
 # Find proper histo booking routine (many of them exist)
 BOOK_HISTO="pwhg_bookhist-multi.o"
 if [ `echo $${POWHEGSRC} | cut -d "_" -f 1` = "powhegboxV1" ]; then
@@ -188,6 +204,9 @@ echo 'Compiling pwhg_main...'
 pwd
 
 $patch_7 
+
+#Here the patch_0: MadGraph + Powheg plugin installing 
+$patch_0 
 
 export PYTHONPATH=./Virtual/:$$PYTHONPATH
 make pwhg_main || fail_exit "Failed to compile pwhg_main"
