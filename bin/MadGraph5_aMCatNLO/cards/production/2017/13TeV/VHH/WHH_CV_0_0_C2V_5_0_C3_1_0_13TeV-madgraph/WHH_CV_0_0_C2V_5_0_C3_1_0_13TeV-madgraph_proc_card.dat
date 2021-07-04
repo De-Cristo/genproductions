@@ -1,0 +1,6 @@
+import model SM_HEL_UFO_noLightYukawa
+define p = u c d s u~ c~ d~ s~
+define j = p
+define w = w+ w-
+generate p p > h h w  QED=4
+output WHH_CV_0_0_C2V_5_0_C3_1_0_13TeV-madgraph -nojpeg

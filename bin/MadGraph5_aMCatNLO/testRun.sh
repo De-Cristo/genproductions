@@ -1,0 +1,7 @@
+./gridpack_generation.sh ZHH_CV_0_0_C2V_10_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_0_0_C2V_10_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
+./gridpack_generation.sh ZHH_CV_0_0_C2V_1_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_0_0_C2V_1_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
+./gridpack_generation.sh ZHH_CV_0_0_C2V_3_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_0_0_C2V_3_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
+./gridpack_generation.sh ZHH_CV_0_0_C2V_5_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_0_0_C2V_5_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
+./gridpack_generation.sh ZHH_CV_1_0_C2V_8_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_1_0_C2V_8_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
+./gridpack_generation.sh ZHH_CV_1_0_C2V_5_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_1_0_C2V_5_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
+./gridpack_generation.sh ZHH_CV_1_0_C2V_8_0_C3_1_0_13TeV-madgraph cards/production/2017/13TeV/VHH/ZHH_CV_1_0_C2V_8_0_C3_1_0_13TeV-madgraph local ALL slc7_amd64_gcc700 CMSSW_10_6_5
