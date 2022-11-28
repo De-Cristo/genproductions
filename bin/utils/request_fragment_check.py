@@ -114,13 +114,13 @@ def concurrency_check(fragment,pi,cmssw_version):
     fragment = re.sub(r'(?m)^ *#.*\n?', '',fragment) # remove lines starting with #
     fragment = fragment.replace(" ","").replace("\"","'")#
     if cmssw_version >= int('10_60_28'.replace('_','')) and int(str(cmssw_version)[:2]) != 11:
-        if "ExternalLHEProducer" in fragment and "generateConcurrently=cms.untracked.bool(True)" in fragment:
+        if "ExternalLHEProducer" in fragment and "generateConcurrently=cms.untracked.bool(True)" in fragment: 
             # first check if the code has correctly implemented concurrent features. Mark conc_check_lhe (LHE step) or conc_check (GEN step) as True if features are found
             if "Herwig7GeneratorFilter" not in fragment: 
                 conc_check_lhe = 1
             else:
                 if "postGenerationCommand=cms.untracked.vstring('mergeLHE.py','-i','thread*/cmsgrid_final.lhe','-o','cmsgrid_final.lhe')" in fragment: 
-                    conc_check_lhe = 1# 
+                    conc_check_lhe = 1#    
         elif "ExternalLHEProducer" not in fragment:#
             conc_check_lhe = 1#
         if "ExternalDecays" not in fragment and "Pythia8ConcurrentHadronizerFilter" in fragment: 
@@ -144,6 +144,9 @@ def concurrency_check(fragment,pi,cmssw_version):
             if "randomizedparameters" in fragment.lower():
                 print("[ERROR] Concurrent generation parameters used along with RandomizedParameter scan.")
                 error_conc = 1
+            if "plhegen" in pi.lower():
+                print("[ERROR] Concurrent generation parameters used along with a pLHEGEN request.") #pLHE+GEN is OK
+                error_conc = 1
         else:
             # then if not both the LHE and GEN step turns on concurrent features, we check if for some cases it is ok not to have concurrency
             if "Pythia8HadronizerFilter" in fragment and ("evtgen" in fragment.lower() or "tauola" in fragment.lower() or "photos" in fragment.lower()):
@@ -152,12 +155,14 @@ def concurrency_check(fragment,pi,cmssw_version):
                 print("Herwig7GeneratorFilter in the wmLHEGEN or pLHEGEN campaign cannot run concurrently.")
             elif "Pythia8GeneratorFilter" in fragment and "randomizedparameters" in fragment.lower():
                 print("Pythia8GeneratorFilter with RandomizedParameter scan cannot run concurrently")
+            elif "plhegen" in pi.lower():
+                print("pLHE cannot run concurrently")
             # for other cases, it is either concurrent generation parameters are missing or wrong
             else:
                 print("[ERROR] Concurrent generation parameters missing or wrong. Please see https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookGenMultithread")
                 error_conc = 1
     else:
-        if "concurrent" in fragment.lower():
+        if "concurrent" in fragment.lower() and "plhegen" not in pi.lower():
             print("[ERROR] Concurrent generation is not supported for versions < CMSSW_10_6_28 and CMSSW_11_X_X series")
             error_conc = 1
     return conc_check_lhe and conc_check, error_conc
@@ -884,17 +889,16 @@ for num in range(0,len(prepid)):
             error += err_tmp
         if herwig_flag != 0:
             os.system('wget -q https://raw.githubusercontent.com/cms-sw/genproductions/master/bin/utils/herwig_common.txt -O herwig_common.txt') 
-            file2 = set(line.strip().replace(",","") for line in open(pi))
             file1 = set(line.strip().replace(",","") for line in open('herwig_common.txt'))
             for line in file1:                
-                if line not in file2:
+                if line not in data_f1:
                     print("[ERROR] Missing herwig setting in fragment: "+line)
                     error += 1
             if pw_gp is True:
                os.system('wget -q https://raw.githubusercontent.com/cms-sw/genproductions/master/bin/utils/herwig_powheg.txt -O herwig_powheg.txt')	
                file_me = set(line.strip().replace(",","") for line in open('herwig_powheg.txt'))
                for line in file_me:
-                   if line not in file2:
+                   if line not in data_f1:
                        print("[ERROR] Missing herwig powheg specific setting in fragment: "+line)
                        error += 1
             if mg_gp is True:
@@ -903,31 +907,31 @@ for num in range(0,len(prepid)):
                os.system('wget -q https://raw.githubusercontent.com/cms-sw/genproductions/master/bin/utils/herwig_mg_wo_merging.txt -O herwig_mg_wo_merging.txt')
                file_me_wo_merg = set(line.strip().replace(",","") for line in open('herwig_mg_wo_merging.txt'))
                if alt_ickkw_c != 0:
-                   for line in file_me:
-                       if line not in file2:
+                   for line in file_me:                   
+                       if line not in data_f1:
                            print("[ERROR] Missing herwig mg5_amc specific setting in fragment: "+line)
                            error += 1 
-                       if "'set FxFxHandler:njetsmax'" not in file2:
+                       if "set FxFxHandler:njetsmax" not in data_f1:
                            print("[ERROR] Missing set FxFxHandler:njetsmax MAX_N_ADDITIONAL_JETS in the user settings block")
                            error += 1
                else:
                    for line in file_me_wo_merg:
-                       if line not in file2:
+                       if line not in data_f1:
                            print("[ERROR] Missing herwig mg5_amc specific setting in fragment: "+line)
                            error += 1 
                if alt_ickkw_c == 3:#fxfx
-                   if "'set FxFxHandler:MergeMode FxFx'" not in file2:
+                   if "'set FxFxHandler:MergeMode FxFx'" not in data_f1:
                        print("[ERROR] Missing set FxFxHandler:MergeMode FxFx in the user settings block")
                        error += 1
                if alt_ickkw_c == 1:#mlm
-                   if "'set FxFxHandler:MergeMode TreeMG5'" not in file2:
+                   if "'set FxFxHandler:MergeMode TreeMG5'" not in data_f1:
                        print("[ERROR] Missing set FxFxHandler:MergeMode TreeMG5 in the user settings block")
                        error += 1 
             if amcnlo_gp is True or alt_ickkw_c == 0:
                os.system('wget -q https://raw.githubusercontent.com/cms-sw/genproductions/master/bin/utils/herwig_mcnlo.txt -O herwig_mcnlo.txt')
                file_me = set(line.strip().replace(",","") for line in open('herwig_mcnlo.txt'))
                for line in file_me:
-                   if line not in file2:
+                   if line not in data_f1:
                        print("[ERROR] Missing herwig MG with 0 jets or mc@nlo specific setting in fragment: "+line)
                        error += 1 
             if "9_3" not in str(cmssw) and "7_1" not in str(cmssw) and pw_gp != 0 and mg_gp !=0 and amcnlo_qg !=0:
@@ -935,17 +939,17 @@ for num in range(0,len(prepid)):
                 file1 = set(line.strip().replace(",","")  for line in open('herwig_frag_lines.txt'))
                 herwig_check = []
                 herwig_psweight_tag = 0
-                for line in file2: print(line)
+                for line in data_f1: print(line)
                 print("-----")	 
                 for line in file1:
                     print(line)
-                    if line not in file2:
+                    if line not in data_f1:
                         herwig_check.append(line)	
                 if len(herwig_check) != 0 and "eec5" not in dn.lower() and "ee5c" not in dn.lower():
                     herwig_count.append(herwig_check[0].count('hw_lhe_common_settings'))
                     herwig_count.append(herwig_check[1].count('herwig7LHECommonSettingsBlock'))
                     herwig_count.append(herwig_check[2].count('from Configuration.Generator.Herwig7Settings.Herwig7LHECommonSettings_cfi import *'))
-                    if all(x == 1 for x in herwig_count) and any("insert SubProcess:MatrixElements" in x for x in list(file2)):
+                    if all(x == 1 for x in herwig_count) and any("insert SubProcess:MatrixElements" in x for x in list(data_f1)):
                         herwig7_bypass_error = 1
                     if "PSWeights" not in herwig_check:
                         herwig_psweight_tag = 1
@@ -986,7 +990,6 @@ for num in range(0,len(prepid)):
 #            print("            filter efficiency = "+str(filter_eff))
 #            print("            matching efficiency = "+str(match_eff))
 #            error += 1
-
         if any(word in dn for word in MEname) and gp_size == 0 and "plhe" not in pi.lower():
             print("[ERROR] gridpack path is not properly specified - most probable reason is that it is not a cvmfs path.")
             error += 1
@@ -1192,9 +1195,8 @@ for num in range(0,len(prepid)):
                         if ("HERWIGPP" not in ps_hw.upper()) or ("HERWIG7" not in ps_hw.upper() and herwig7_bypass_error == 1):
                             print("[ERROR] HERWIGPP or HERWIG7 = parton_shower not in run_card.dat")
                             error += 1
-
-        if "jhugen" in dn.lower():
-            if gp_size == 0: break
+        
+        if "jhugen" in dn.lower() and gp_size != 0 and "plhe" not in pi.lower():
             for root, dirs, files in os.walk(os.path.join(my_path, pi, "."), topdown=False):
                 for name in files:
                     if "JHUGen.input" in name:
@@ -1227,6 +1229,7 @@ for num in range(0,len(prepid)):
                     else:
                         WriteFailedEvents_flag = 1
                         print("[OK] "+str(jhu_wfe)+" for this jhugen+powheg sample.")
+
         for ind, word in enumerate(MEname):
             if fsize == 0: break
             if ind == 3: break
@@ -1444,9 +1447,9 @@ for num in range(0,len(prepid)):
                             else:
                                 vbf_lo = 1   
                                 print("VBF process at LO")
-                        warn_tmp , err_tmp = vbf_dipole_recoil_check(vbf_lo,vbf_nlo,data_f2,pw_gp,dn)
-                        warning += warn_tmp
-                        error += err_tmp
+                            warn_tmp , err_tmp = vbf_dipole_recoil_check(vbf_lo,vbf_nlo,data_f2,pw_gp,dn)
+                            warning += warn_tmp
+                            error += err_tmp
                     if os.path.isfile(filename_mggpc) is True :
                         ickkw = os.popen('more '+filename_mggpc+' | tr -s \' \' | grep "= ickkw"').read()
                         bw = os.popen('more '+filename_mggpc+' | tr -s \' \' | grep "= bwcutoff"').read()
