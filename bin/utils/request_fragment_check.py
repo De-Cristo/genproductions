@@ -99,6 +99,7 @@ def check_replace(runcmsgridfile):
     return error_check_replace 
 
 def slha_gp(gridpack_cvmfs_path,slha_flag):
+    slha_all_path = os.path.dirname(gridpack_eos_path)
     if slha_flag == 1:
         if "%i" in gridpack_cvmfs_path:
             gridpack_cvmfs_path = gridpack_cvmfs_path.replace("%i","*")
@@ -109,21 +110,20 @@ def slha_gp(gridpack_cvmfs_path,slha_flag):
         else:
             slha_flag = 0
         if slha_flag == 1:
-            slha_all_path = os.path.dirname(gridpack_eos_path)
             print("Directory: "+slha_all_path)
             list_gridpack_cvmfs_path = os.listdir(slha_all_path)[0]
             print(list_gridpack_cvmfs_path)
             gridpack_cvmfs_path = slha_all_path+'/'+list_gridpack_cvmfs_path
             print("SLHA request - checking single gridpack:")
             print(gridpack_cvmfs_path)
-        return gridpack_cvmfs_path, slha_all_path, slha_flag
+    return gridpack_cvmfs_path, slha_all_path, slha_flag
 
 
 def tunes_settings_check(dn,fragment,pi,sherpa_flag):
     error_tunes_check = []
-    if "Summer22" in pi and "FlatRandomEGunProducer" not in fragment and "FlatRandomPtGunProducer" not in fragment and "Pythia8EGun" not in fragment and "Pythia8PtGun" not in fragment and "FlatRandomPtAndDxyGunProducer" not in fragment and sherpa_flag == 0:
+    if "Run3" in pi and "FlatRandomEGunProducer" not in fragment and "FlatRandomPtGunProducer" not in fragment and "Pythia8EGun" not in fragment and "Pythia8PtGun" not in fragment and "FlatRandomPtAndDxyGunProducer" not in fragment and sherpa_flag == 0:
         if ("Configuration.Generator.MCTunesRun3ECM13p6TeV" not in fragment) and ("Configuration.Generator.Herwig7Settings.Herwig7CH3TuneSettings_cfi" not in fragment) or ("from Configuration.Generator.MCTunes2017" in fragment):
-            error_tunes_check.append(" For Summer22 samples, please use either:\n from Configuration.Generator.MCTunesRun3ECM13p6TeV.PythiaCP5Settings_cfi import * \n from Configuration.Generator.Herwig7Settings.Herwig7CH3TuneSettings_cfi import * \n in your fragment instead of: from Configuration.Generator.MCTunes2017.PythiaCP5Settings_cfi import *")
+            error_tunes_check.append(" For Run3 samples, please use either:\n from Configuration.Generator.MCTunesRun3ECM13p6TeV.PythiaCP5Settings_cfi import * \n from Configuration.Generator.Herwig7Settings.Herwig7CH3TuneSettings_cfi import * \n in your fragment instead of: from Configuration.Generator.MCTunes2017.PythiaCP5Settings_cfi import *")
     if "Run3" in pi and (dn.startswith("DYto") or dn.startswith("Wto")):
         if "ktdard" in fragment and "0.248" not in fragment:
             error_tunes_check.append(" 'kthard = 0.248' not in fragment for DY or Wjets MG5_aMC request for Run3. Please fix.")
@@ -341,6 +341,12 @@ def evtgen_check(fragment):
 def run3_checks(fragment,dn,pi):
     err = []
     fragment = fragment.replace(" ","")
+    run3_checks_exception_list = [
+        "TSG-Run3Summer23BPixGS-00007", 
+        "TSG-Run3Summer23BPixGS-00043", 
+        "TSG-Run3Summer23BPixGS-00044", 
+        "TSG-Run3Summer23BPixGS-00045"
+    ]
     print("======> Run3 Fragment and dataset name checks:")
     if "comEnergy" in fragment:
         comline = re.findall('comEnergy=\S+',fragment)
@@ -348,7 +354,7 @@ def run3_checks(fragment,dn,pi):
             err.append("The c.o.m. energy is not specified as 13600 GeV in the fragment."+comline[0])
         if "run3winter21" in pi.lower() and "14000" not in comline[0]: 
             err.append("The c.o.m. energy is not specified as 14000 GeV in the fragment"+comline[0])
-    if ("run3winter22" in pi.lower() or "summer2" in pi.lower()) and ("FlatRandomEGunProducer" not in fragment and "FlatRandomPtGunProducer" not in fragment and "Pythia8EGun" not in fragment and "13p6TeV" not in dn):
+    if ("run3winter22" in pi.lower() or "summer2" in pi.lower()) and ("FlatRandomEGunProducer" not in fragment and "FlatRandomPtGunProducer" not in fragment and "Pythia8EGun" not in fragment and "13p6TeV" not in dn and pi not in run3_checks_exception_list):
         err.append("The data set name does not contain 13p6TeV for this Run3 request")
     if "run3winter21" in pi.lower() and ("FlatRandomEGunProducer" not in fragment and "FlatRandomPtGunProducer" not in fragment and "Pythia8EGun" not in fragment and "14TeV" not in dn):
         err.append("The data set name does not contain 14TeV for this Run3 request")
@@ -450,6 +456,8 @@ if args.ticket is not None:
     prepid = []
     for rr in root_requests_from_ticket(ticket):
         if 'GS' in rr or 'wmLHE' in rr or 'pLHE' in rr or 'FS' in rr: prepid.append(rr)
+
+
 
 prepid = list(set(prepid)) #to avoid requests appearing x times if x chains have the same request
 print("Current date and time: %s" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
@@ -627,7 +635,7 @@ for num in range(0,len(prepid)):
         print("Filter efficiency in fragment =" + str(filter_eff_fragment))
         print("Filter efficiency from generator parameters field = "+str(filter_eff))
         # see https://github.com/cms-sw/genproductions/issues/3269
-        if len(filter_eff_fragment) > 0 and float(filter_eff_fragment) < 1.0:
+        if len(filter_eff_fragment) > 0 and float(filter_eff_fragment) < 1.0 and float(filter_eff_fragment) > 0:
             if filter_eff_fragment and filter_eff and int(ext) == 0 and float(filter_eff_fragment) != float(filter_eff):
                 errors.append("In general, filter efficiency in the fragment is not taken into accout. Please make sure that the filter efficiency in the generator parameters field is correct!")
 	
