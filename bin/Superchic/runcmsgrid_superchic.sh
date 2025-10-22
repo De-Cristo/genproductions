@@ -13,13 +13,11 @@ set_superchic_config(){
 
 run_superchic(){
     echo "*** STARTING SUPERCHIC PRODUCTION ***"
-    LHAPDF_DATA_PATH=${LHAPDF_DATA_PATH}:${LHEWORKDIR}/${SUPERCHICDIR}/lhapdf
-    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${LHEWORKDIR}/${APFELDIR}/build/lib64
+    LHAPDF_DATA_PATH=${LHAPDF_DATA_PATH}:${LHEWORKDIR}/${SUPERCHICDIR}/build/share/SuperChic/SF
     export SUPERCHIC_DATA_PATH=${LHEWORKDIR}/${SUPERCHICDIR}/build/share/SuperChic
     cd ${LHEWORKDIR}/${SUPERCHICDIR}/build/bin
     ./superchic < input.DAT 2>&1 | tee input.log; test ${PIPESTATUS[0]} -eq 0 || fail_exit "superchic error: exit code not 0"
-    ${LHEWORKDIR}/macros/convert_SCLHE2LHE evrecs/evrecout.dat 2>&1 | tee upcgen.log; test ${PIPESTATUS[0]} -eq 0 || fail_exit "convert_SCLHE2LHE error: exit code not 0"
-    sed -i '/SUPERCHIC/a '${APFELDIR} evrecout_proc.lhe
+    ${LHEWORKDIR}/macros/convert_SCLHE2LHE evrecs/evrecout.dat 2>&1 | tee superchic.log; test ${PIPESTATUS[0]} -eq 0 || fail_exit "convert_SCLHE2LHE error: exit code not 0"
     sed -i '/SUPERCHIC/a '${SUPERCHICDIR} evrecout_proc.lhe
     sed -i 's/--/- -/' ${CONFIG}
     sed -i '/SUPERCHIC/r'${CONFIG} evrecout_proc.lhe
@@ -65,15 +63,6 @@ if [ "$use_gridpack_env" = true ]; then
     export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
     source $VO_CMS_SW_DIR/cmsset_default.sh
 
-    # Make a directory that doesn't overlap
-    if [[ -d "${CMSSW_BASE}" ]] && [[ "${LHEWORKDIR}" = "${CMSSW_BASE}"/* ]]; then
-        cd ${CMSSW_BASE}/..
-        TPD=${PWD}/lhe1t2m3p
-        [[ ! -d "${TPD}" ]] && mkdir ${TPD}
-        cd ${TPD}
-        echo "Changed to: "${TPD}
-    fi
-
     eval `scramv1 unsetenv -sh`
     export SCRAM_ARCH=${scram_arch_version}
     scramv1 project CMSSW ${cmssw_version}
@@ -83,7 +72,6 @@ fi
 
 cd $LHEWORKDIR
 
-APFELDIR=APFELDIR_REPLACE
 SUPERCHICDIR=SUPERCHICDIR_REPLACE
 CONFIG=${LHEWORKDIR}/${SUPERCHICDIR}/build/bin/input.DAT
 
@@ -95,9 +83,6 @@ run_superchic
 
 #Perform test
 xmllint --stream --noout ${LHEWORKDIR}/cmsgrid_final.lhe > /dev/null 2>&1; test $? -eq 0 || fail_exit "xmllint integrity check failed on cmsgrid_final.lhe"
-
-#Clean up
-[[ -d "${TPD}" ]] && rm -rf ${TPD}
 
 echo "Output ready with cmsgrid_final.lhe at $LHEWORKDIR"
 echo "End of job on "`date`
